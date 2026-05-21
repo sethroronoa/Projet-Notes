@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi Réparation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-white">
+<div class="container mt-5 py-5">
+    <div class="card bg-secondary shadow-lg col-md-6 mx-auto">
+        <div class="card-body">
+            <h2 class="text-center mb-4">🔍 Suivre mon téléphone</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="reference" class="form-control mb-3"
+                       placeholder="Entrez votre référence (ex: AA25001)"
+                       value="{{ reference_recherche|default:'' }}"
+                       style="font-family:monospace; font-size:1.1rem;">
+                <button type="submit" class="btn btn-primary w-100">Vérifier</button>
+            </form>
+
+            {% if erreur %}
+            <div class="alert alert-danger mt-3">
+                <i class="fa fa-triangle-exclamation me-2"></i>{{ erreur }}
+            </div>
+            {% endif %}
+
+            {% if ticket %}
+            <div class="mt-4 p-3 bg-white text-dark rounded">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Réf : <strong>{{ ticket.reference }}</strong></h5>
+                    <span class="badge bg-primary fs-6">{{ ticket.get_statut_display }}</span>
+                </div>
+                <hr>
+                <p><strong>Client :</strong> {{ ticket.client_nom }}</p>
+                <p><strong>Appareil :</strong> {{ ticket.modele_telephone }}</p>
+                <p><strong>Problème :</strong> {{ ticket.probleme_declare }}</p>
+                <p><strong>Déposé le :</strong> {{ ticket.date_creation|date:"d/m/Y" }}</p>
+                <p class="mb-0"><strong>Prix estimé :</strong>
+                    <span class="badge bg-success fs-5">{{ ticket.prix_total }} DA</span>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

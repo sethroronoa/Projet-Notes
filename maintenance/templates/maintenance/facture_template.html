@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture #{{ facture.pk }}</title>
+    <style>
+        @page { size: A4; margin: 15mm 12mm 15mm 12mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1a1a1a; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { vertical-align: top; padding: 0; }
+
+        /* HEADER */
+        .hdr-table { width: 100%; border-bottom: 3px solid #1a56db; padding-bottom: 12px; margin-bottom: 18px; }
+        .brand-name { font-size: 22px; font-weight: bold; color: #1a56db; }
+        .brand-sub  { font-size: 10px; color: #666; margin-top: 3px; line-height: 1.6; }
+        .doc-right  { text-align: right; }
+        .doc-title  { font-size: 20px; font-weight: bold; color: #1a1a1a; }
+        .doc-num    { font-size: 12px; font-weight: bold; color: #1a56db; margin-top: 4px; }
+        .doc-date   { font-size: 11px; color: #666; margin-top: 2px; }
+
+        /* INFO BOXES */
+        .info-cell  { width: 48%; padding: 10px 14px; background: #f5f7ff; border: 1px solid #dde3f5; }
+        .info-gap   { width: 4%; }
+        .info-title { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #1a56db; margin-bottom: 6px; }
+        .info-main  { font-size: 13px; font-weight: bold; color: #1a1a1a; margin-bottom: 3px; }
+        .info-row p { font-size: 11px; color: #333; margin-bottom: 2px; }
+
+        /* DEVICE BAND */
+        .device-band { background: #1a56db; color: #fff; padding: 10px 14px; margin: 14px 0; }
+        .band-label  { font-size: 9px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 2px; }
+        .band-val    { font-size: 12px; }
+
+        /* ITEMS TABLE */
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 14px; margin-bottom: 0; }
+        .items-table thead tr { background: #1a1a2e; color: #fff; }
+        .items-table th { padding: 9px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: bold; text-align: left; }
+        .items-table th.r { text-align: right; }
+        .items-table td { padding: 9px 12px; font-size: 11px; border-bottom: 1px solid #e8e8ee; color: #333; vertical-align: middle; }
+        .items-table td.r { text-align: right; }
+        .items-table tbody tr:nth-child(even) td { background: #f9f9fe; }
+        .total-row td { background: #1a56db; color: #fff; font-size: 14px; font-weight: bold; padding: 11px 12px; border-bottom: none; }
+        .total-row td.r { text-align: right; }
+
+        /* FOOTER */
+        .ftr { text-align: center; color: #aaa; font-size: 10px; border-top: 1px solid #e8e8ee; padding-top: 10px; margin-top: 24px; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<table class="hdr-table">
+    <tr>
+        <td>
+            <div class="brand-name">PhoneRepair Pro</div>
+            <div class="brand-sub">Service de réparation mobile professionnel<br>Tel : +213 XX XX XX XX</div>
+        </td>
+        <td class="doc-right">
+            <div class="doc-title">FACTURE</div>
+            <div class="doc-num">#{{ facture.pk }}</div>
+            <div class="doc-date">Emise le : {{ facture.date_creation|date:"d/m/Y" }}</div>
+        </td>
+    </tr>
+</table>
+
+<!-- CLIENT + TICKET INFO -->
+<table class="info-row">
+    <tr>
+        <td class="info-cell">
+            <div class="info-title">Facture etablie pour</div>
+            <p class="info-main">{{ ticket.client_nom }}</p>
+        </td>
+        <td class="info-gap"></td>
+        <td class="info-cell">
+            <div class="info-title">Ticket de reparation</div>
+            <p><strong>Référence :</strong> {{ ticket.reference }}</p>
+            <p><strong>Date depot :</strong> {{ ticket.date_creation|date:"d/m/Y" }}</p>
+            <p><strong>Statut :</strong> {{ ticket.get_statut_display }}</p>
+        </td>
+    </tr>
+</table>
+
+<!-- DEVICE BAND -->
+<table style="width:100%; margin: 14px 0;">
+    <tr>
+        <td class="device-band" style="width:35%; padding:10px 14px;">
+            <span class="band-label">Appareil</span>
+            <span class="band-val">{{ ticket.modele_telephone }}</span>
+        </td>
+        <td style="width:2%;"></td>
+        <td class="device-band" style="padding:10px 14px;">
+            <span class="band-label">Probleme declare</span>
+            <span class="band-val">{{ ticket.probleme_declare }}</span>
+        </td>
+    </tr>
+</table>
+
+<!-- PIECES TABLE -->
+<table class="items-table">
+    <thead>
+        <tr>
+            <th style="width:5%;">#</th>
+            <th style="width:40%;">Designation</th>
+            <th style="width:20%;">Reference</th>
+            <th style="width:10%;" class="r">Qte</th>
+            <th style="width:25%;" class="r">Prix unitaire (DA)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ligne in facture.lignes.all %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ ligne.piece.nom }}</td>
+            <td>{{ ligne.piece.reference }}</td>
+            <td class="r">{{ ligne.quantite }}</td>
+            <td class="r">{{ ligne.piece.prix_unitaire }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="text-align:center; padding:16px; color:#aaa; font-style:italic;">
+                Aucune piece detachee enregistree pour ce ticket.
+            </td>
+        </tr>
+        {% endfor %}
+        <tr class="total-row">
+            <td colspan="4"><strong>TOTAL A PAYER</strong></td>
+            <td class="r"><strong>{{ ticket.prix_total }} DA</strong></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="ftr">
+    Merci pour votre confiance &mdash; PhoneRepair Pro &mdash; Reparation garantie 30 jours pieces et main d'oeuvre.
+</div>
+
+</body>
+</html>

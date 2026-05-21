@@ -1,0 +1,238 @@
+{% extends 'maintenance/base.html' %}
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card bg-primary text-white p-3"><h6>Total</h6><h3>{{ stats.total }}</h3></div></div>
+    <div class="col-md-3"><div class="card bg-info text-white p-3"><h6>Reçus</h6><h3>{{ stats.recu }}</h3></div></div>
+    <div class="col-md-3"><div class="card bg-warning text-white p-3"><h6>En réparation</h6><h3>{{ stats.reparation }}</h3></div></div>
+    <div class="col-md-3"><div class="card bg-success text-white p-3"><h6>Prêts</h6><h3>{{ stats.pret }}</h3></div></div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Interventions</h5>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#mAdd">
+            <i class="fa fa-plus me-1"></i>Nouveau Ticket
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Réf</th>
+                        <th>Client</th>
+                        <th>Modèle</th>
+                        <th>Problème</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tickets %}
+                    <tr id="row-{{ t.id }}">
+                        <td>
+                            <span class="badge bg-dark">{{ t.reference|default:"—" }}</span>
+                        </td>
+                        <td class="fw-semibold">{{ t.client_nom }}</td>
+                        <td>{{ t.modele_telephone }}</td>
+                        <td class="text-muted small">{{ t.probleme_declare|truncatechars:30 }}</td>
+                        <td>
+                            <select class="form-select form-select-sm sel-statut"
+                                    data-id="{{ t.id }}" style="min-width:170px;">
+                                {% for c, l in statuts %}
+                                <option value="{{ c }}" {% if t.statut == c %}selected{% endif %}>{{ l }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="text-nowrap">
+                            <button class="btn btn-warning btn-sm btn-edit"
+                                    data-id="{{ t.id }}"
+                                    data-client="{{ t.client_nom }}"
+                                    data-mod="{{ t.modele_telephone }}"
+                                    data-prob="{{ t.probleme_declare }}"
+                                    title="Modifier">
+                                <i class="fa fa-pen"></i>
+                            </button>
+                            <a href="{% url 'maintenance:generer_facture_pdf' t.id %}"
+                               class="btn btn-primary btn-sm" target="_blank" title="Facture PDF">
+                                <i class="fa fa-file-pdf"></i>
+                            </a>
+                            <button class="btn btn-danger btn-sm btn-del"
+                                    data-id="{{ t.id }}" title="Supprimer">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa fa-inbox fa-2x d-block mb-2"></i>
+                            Aucun ticket. Cliquez sur "Nouveau Ticket".
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter -->
+<div class="modal fade" id="mAdd" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fa fa-plus me-2"></i>Nouveau Ticket</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nom du client</label>
+                    <input type="text" id="aClient" class="form-control" placeholder="Ex: Ahmed Benali">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Modèle du téléphone</label>
+                    <input type="text" id="aMod" class="form-control" placeholder="Ex: Samsung S21">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Problème déclaré</label>
+                    <textarea id="aProb" class="form-control" rows="3"
+                              placeholder="Ex: Écran cassé, batterie HS..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-success" id="sAdd">
+                    <i class="fa fa-save me-1"></i>Créer le ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier -->
+<div class="modal fade" id="mEdit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fa fa-pen me-2"></i>Modifier le ticket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="eId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nom du client</label>
+                    <input type="text" id="eClient" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Modèle du téléphone</label>
+                    <input type="text" id="eMod" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Problème déclaré</label>
+                    <textarea id="eProb" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" id="sEdit">
+                    <i class="fa fa-save me-1"></i>Sauvegarder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+    <div id="liveToast" class="toast text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastMsg"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    const CSRF       = '{{ csrf_token }}';
+    const URL_ADD    = '{% url "maintenance:ajouter_ticket" %}';
+    const URL_STATUT = '{% url "maintenance:modifier_statut" %}';
+    const URL_DELETE = '{% url "maintenance:supprimer_ticket" %}';
+
+    function showToast(msg, type) {
+        var $t = $('#liveToast');
+        $t.removeClass('bg-success bg-danger bg-warning').addClass('bg-' + type);
+        $('#toastMsg').text(msg);
+        bootstrap.Toast.getOrCreateInstance($t[0], { delay: 3500 }).show();
+    }
+
+    $('#sAdd').click(function () {
+        var client  = $('#aClient').val().trim();
+        var modele  = $('#aMod').val().trim();
+        var probleme = $('#aProb').val().trim();
+        if (!client || !modele || !probleme) {
+            showToast('Remplissez tous les champs.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: URL_ADD, type: 'POST', contentType: 'application/json',
+            headers: { 'X-CSRFToken': CSRF },
+            data: JSON.stringify({ client_nom: client, modele: modele, probleme: probleme }),
+            success: function () { location.reload(); },
+            error: function () { showToast('Erreur lors de la création.', 'danger'); }
+        });
+    });
+
+    $(document).on('click', '.btn-edit', function () {
+        $('#eId').val($(this).data('id'));
+        $('#eClient').val($(this).data('client'));
+        $('#eMod').val($(this).data('mod'));
+        $('#eProb').val($(this).data('prob'));
+        $('#mEdit').modal('show');
+    });
+
+    $('#sEdit').click(function () {
+        var id = $('#eId').val();
+        var editUrl = "{% url 'maintenance:edit_ticket_details' '00000000-0000-0000-0000-000000000000' %}"
+                      .replace('00000000-0000-0000-0000-000000000000', id);
+        $.ajax({
+            url: editUrl, type: 'POST', contentType: 'application/json',
+            headers: { 'X-CSRFToken': CSRF },
+            data: JSON.stringify({
+                client_nom: $('#eClient').val(),
+                modele: $('#eMod').val(),
+                probleme: $('#eProb').val()
+            }),
+            success: function () { location.reload(); },
+            error: function () { showToast('Erreur lors de la modification.', 'danger'); }
+        });
+    });
+
+    $(document).on('change', '.sel-statut', function () {
+        $.ajax({
+            url: URL_STATUT, type: 'POST', contentType: 'application/json',
+            headers: { 'X-CSRFToken': CSRF },
+            data: JSON.stringify({ ticket_id: $(this).data('id'), statut: $(this).val() }),
+            success: function () { showToast('Statut mis à jour.', 'success'); },
+            error: function () { showToast('Erreur de mise à jour.', 'danger'); }
+        });
+    });
+
+    $(document).on('click', '.btn-del', function () {
+        if (!confirm('Supprimer ce ticket définitivement ?')) return;
+        var id = $(this).data('id');
+        $.ajax({
+            url: URL_DELETE, type: 'POST', contentType: 'application/json',
+            headers: { 'X-CSRFToken': CSRF },
+            data: JSON.stringify({ ticket_id: id }),
+            success: function () {
+                $('#row-' + id).fadeOut(300, function () { $(this).remove(); });
+                showToast('Ticket supprimé.', 'success');
+            },
+            error: function () { showToast('Erreur lors de la suppression.', 'danger'); }
+        });
+    });
+</script>
+{% endblock %}

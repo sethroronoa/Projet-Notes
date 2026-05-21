@@ -1,0 +1,126 @@
+{% extends 'maintenance/base.html' %}
+
+{% block titre %}Inventaire — PhoneRepair Pro{% endblock %}
+{% block page_title %}Inventaire des pièces{% endblock %}
+{% block breadcrumb %}Inventaire{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="fa fa-circle-plus me-2"></i>Ajouter une pièce
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="ajouter">
+
+                    <div class="mb-3">
+                        <label for="nom" class="form-label fw-semibold">
+                            Nom de la pièce <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="nom" name="nom" class="form-control" required
+                               placeholder="Ex : Écran LCD Samsung S23">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reference" class="form-label fw-semibold">
+                            Référence <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="reference" name="reference" class="form-control" required
+                               placeholder="Ex : SCR-SAM-S23-BLK">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="prix_unitaire" class="form-label fw-semibold">
+                                Prix (DA) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" id="prix_unitaire" name="prix_unitaire"
+                                   class="form-control" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="col-6">
+                            <label for="quantite_stock" class="form-label fw-semibold">Qté en stock</label>
+                            <input type="number" id="quantite_stock" name="quantite_stock"
+                                   class="form-control" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fa fa-floppy-disk me-1"></i> Enregistrer la pièce
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="fa fa-boxes-stacked me-2 text-primary"></i>Stock actuel
+                </h5>
+                <span class="badge bg-primary fs-6">{{ pieces|length }} article(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Désignation</th>
+                                <th scope="col">Référence</th>
+                                <th scope="col">Prix (DA)</th>
+                                <th scope="col" class="text-center">Stock</th>
+                                <th scope="col" class="text-center">Disponibilité</th>
+                                <th scope="col" class="text-center">Supprimer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for piece in pieces %}
+                            <tr>
+                                <td class="fw-semibold">{{ piece.nom }}</td>
+                                <td><code class="small">{{ piece.reference }}</code></td>
+                                <td class="fw-semibold text-primary">{{ piece.prix_unitaire }} DA</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary fs-6">{{ piece.quantite_stock }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if piece.quantite_stock > 0 %}
+                                    <span class="badge bg-success">En stock</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Rupture</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <form method="post"
+                                          onsubmit="return confirm('Supprimer « {{ piece.nom }} » définitivement ?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="supprimer">
+                                        <input type="hidden" name="piece_id" value="{{ piece.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fa fa-box-open fa-2x d-block mb-2"></i>
+                                    L'inventaire est vide. Ajoutez votre première pièce.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
