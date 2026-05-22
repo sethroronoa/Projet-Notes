@@ -2,11 +2,12 @@ import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from .models import TicketReparation, PieceDetachee, Facture
 
-
+@login_required
 def dashboard(request):
     return render(request, 'maintenance/dashboard.html', {
         'tickets': TicketReparation.objects.all(),
@@ -84,7 +85,7 @@ def suivre_ticket(request):
         'reference_recherche': reference_recherche,
     })
 
-
+@login_required
 def inventaire(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -102,7 +103,7 @@ def inventaire(request):
         'pieces': PieceDetachee.objects.all()
     })
 
-
+@login_required
 def generer_facture_pdf(request, pk):
     ticket = get_object_or_404(TicketReparation, pk=pk)
     facture, _ = Facture.objects.get_or_create(ticket=ticket)
